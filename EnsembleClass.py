@@ -5,15 +5,14 @@ import random
 from ShipClass import *
 import time
 
-Top_Speed = 3
-G = 0.1
-Ship_Grav_Coeff = 100
+Top_Speed = 5
+G = 1
+Ship_Grav_Coeff = 20
 Restitution = 0.9
 Max_Body_Radius = 20
 Min_Body_Radius = 10
 Ship_Radius = 10
 Grav_Exponent = 2
-Tick_Time = 0.05
 
 class Ensemble:
     def __init__(self, dims):
@@ -22,8 +21,19 @@ class Ensemble:
         self.ship = Ship(dims * 0.5)
         self.bodies = []
         self.crashed = False
+        self.ship_grav_coeff = 20
+        self.safe_radius = 200
 
     # ---------------------- getters and setters
+
+    def get_safe_radius(self):
+        return self.safe_radius
+
+    def set_ship_grav_coeff(self, coeff):
+        self.ship_grav_coeff = coeff
+
+    def get_ship_grav_coeff(self):
+        return self.ship_grav_coeff
 
     def set_bodies(self, bodies):
         self.bodies = bodies
@@ -33,6 +43,9 @@ class Ensemble:
 
     def get_ship(self):
         return self.ship
+
+    def set_ship(self, ship):
+        self.ship = ship
 
     def get_dims(self):
         return self.dims
@@ -60,12 +73,14 @@ class Ensemble:
         return False
 
     def is_too_close_to_ship(self, new_pos, new_r):
-        # Returns True if the new coordinates are too close to the ship
-        pos_x = new_pos[0][0]
-        pos_y = new_pos[1][0]
+        # Returns True if the new coordinates place the body within 100 px of the ship
+        ship_pos = self.get_ship().get_pos()
+
         w = self.get_dims()[0][0]
         h = self.get_dims()[1][0]
-        if pos_x + new_r < w / 3 or pos_x - new_r > 2 * w / 3 or pos_y + new_r < h / 3 or pos_y - new_r > 2 * h / 3:
+
+        disp = self.get_shortest_displacement(ship_pos, new_pos)
+        if np.linalg.norm(disp) > new_r + self.get_safe_radius():
             return False
         return True
 
@@ -85,24 +100,54 @@ class Ensemble:
             if self.is_pos_valid(new_pos, new_radius):
                 return new_pos
 
-    def get_new_vel(self):
+    def get_new_vel(self, top_speed):
         # Generates a velocity vector in a random direction and of random magnitude
-        speed = random.uniform(0, Top_Speed)
+        speed = random.uniform(0, top_speed)
         angle = random.uniform(0, 2 * math.pi)
 
         return np.array([[speed * math.cos(angle)], [speed * math.sin(angle)]])
 
-    def populate(self, n):
+    def add_bodies(self, n, top_speed):
         # Places n bodies that do not intersect and are not close to the ship
         for i in range(n):
             new_radius = random.uniform(Min_Body_Radius, Max_Body_Radius)
             new_pos = self.get_new_pos(new_radius)
-            new_vel = self.get_new_vel()
+            new_vel = self.get_new_vel(top_speed)
             new_body = Body(new_pos, new_vel, new_radius)
 
             self.add_body(new_body)
 
-    # ------------------------------------Calculate acceleration
+    def populate(self, n):
+        self.set_bodies([])
+        self.add_bodies(n, Top_Speed)
+
+    def add_bodies_constant_mass(self, n, top_speed):
+        init_mass = self.get_total_mass()
+        self.add_bodies(n, top_speed)
+        self.shrink_all_bodies(init_mass)
+
+    def reset_ensemble(self, n):
+        self.set_ship(Ship(self.get_dims() / 2))
+        self.populate(n)
+        self.set_crashed(False)
+
+    # ------------------------------------ Shrink bodies
+    def get_total_mass(self):
+        total = 0
+        for body in self.get_bodies():
+            total += body.get_mass()
+        return total
+
+    def shrink_all_bodies(self, new_total_mass):
+        current_total_mass = self.get_total_mass()
+
+        for body in self.get_bodies():
+            body.set_mass(body.get_mass() * new_total_mass / current_total_mass)
+
+
+
+
+    # ------------------------------------ Calculate acceleration
 
     def get_shortest_displacement (self, pos_1, pos_2):
         # Assuming a torus-shaped universe, returns the shortest path from pos_1 to pos_2 under some weird distortion of
@@ -156,7 +201,7 @@ class Ensemble:
     def update_ship_acc(self):
         # Updates acceleration of the ship or reflects it off a body
         acc = self.get_acc_from(self.get_ship().get_pos())
-        self.get_ship().set_acc(self.get_ship().get_thrust() + Ship_Grav_Coeff * acc)
+        self.get_ship().set_acc(self.get_ship().get_thrust() + self.get_ship_grav_coeff() * acc)
 
     # ----------------------------------- Torus universe
 
@@ -256,13 +301,13 @@ class Ensemble:
 
 
     def tick(self):
-
+        ship = self.get_ship()
+        ship.update_thrust()
         self.update_body_acc()
         self.update_ship_acc()
         for body in self.get_bodies():
             body.update_vel()
             body.update_pos()
-        ship = self.get_ship()
         ship.update_vel()
         ship.update_pos()
         self.teleport_all()

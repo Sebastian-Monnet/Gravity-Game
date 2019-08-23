@@ -3,8 +3,7 @@ import math
 
 Thrust_Constant = 0.5
 Turn_Speed = 0.3  # in radians
-Max_Throttle = 1
-Throttle_Speed = 0.1
+Throttle_Speed = 0.03
 
 
 class Ship:
@@ -17,9 +16,11 @@ class Ship:
         self.throttle = 0.0
         self.direction_vec = np.array([[1.0], [0.0]])
         self.thrust = np.array([[0.0], [0.0]])
+        self.max_throttle = 1
 
     # Getters and setters
-    
+    def get_max_throttle(self):
+        return self.max_throttle
     def get_direction_vec(self):
         return self.direction_vec
 
@@ -64,7 +65,7 @@ class Ship:
     def set_throttle(self, throttle):
         self.throttle = throttle
 
-        self.set_thrust(throttle * Thrust_Constant * self.get_direction_vec())
+        self.update_thrust()
 
 
     # Motion updates
@@ -75,6 +76,9 @@ class Ship:
     def update_pos(self):
         self.set_pos(self.get_pos() + self.get_vel())
 
+    def update_thrust(self):
+        self.set_thrust(self.get_throttle() * Thrust_Constant * self.get_direction_vec())
+
     # Controls
 
     def turn_left(self):
@@ -84,13 +88,13 @@ class Ship:
         self.set_angle(self.get_angle() + Turn_Speed)
 
     def throttle_up(self):
-        self.set_throttle(min(Max_Throttle, self.get_throttle() + Throttle_Speed))
+        self.set_throttle(min(self.get_max_throttle(), self.get_throttle() + Throttle_Speed))
 
     def throttle_down(self):
         self.set_throttle(max(0, self.get_throttle() - Throttle_Speed))
 
     def full_throttle(self):
-        self.set_throttle(Max_Throttle)
+        self.set_throttle(self.get_max_throttle())
 
     def cut_throttle(self):
         self.set_throttle(0.0)

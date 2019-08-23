@@ -6,7 +6,6 @@ class Engine:
     def __init__(self, ensemble):
         self.ensemble = ensemble
         self.paused = False
-        self.game_over = False
 
     # ------------------- Getters and setters
 
@@ -50,14 +49,10 @@ class Engine:
     # ------------------------- Tick
 
     def tick(self):
-        start_time = time.time()
+
         self.handle_keys()
         self.get_ensemble().tick()
         end_time = time.time()
-        pygame.event.pump()
-        time_remaining = Tick_Time + start_time - end_time
-        if time_remaining > 0:
-            time.sleep(time_remaining)
 
 
 
