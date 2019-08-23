@@ -72,8 +72,7 @@ class Game:
 
 
     def update_score(self):
-        inc = 0.01 * np.linalg.norm(self.get_ensemble().get_ship().get_vel()) ** 2 \
-              * self.get_ticks() ** 0.1
+        inc = 0.1 * self.get_ticks() ** 0.1
         self.set_score(self.get_score() + inc)
 
     def tick(self):
@@ -86,7 +85,7 @@ class Game:
             self.get_display().draw_game(int(self.get_score()))
             self.update_ticks_per_new_body()
             if self.get_ticks() % self.get_ticks_per_new_body() == 0:
-                self.get_engine().get_ensemble().add_bodies_constant_mass(1, 4 * self.get_ticks() ** 0.1)
+                self.get_engine().get_ensemble().add_bodies_constant_mass(1, 4 * self.get_ticks() ** 0.15)
         self.update_score()
         self.set_ticks(self.get_ticks() + 1)
 

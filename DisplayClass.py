@@ -1,7 +1,7 @@
 import pygame
 from EnsembleClass import *
 
-Ship_Colour = (255, 255, 255)
+Ship_Colour = (255, 0, 0)
 Body_Colour = (255, 255, 255)
 Ship_Radius = 10
 Line_Length = 15
@@ -36,6 +36,19 @@ class Display:
     def get_title_font(self):
         return self.title_font
 
+    def draw_one_ship(self, x_pos, y_pos, angle):
+        centre = (x_pos, y_pos)
+        tip = (x_pos + Ship_Radius * math.cos(angle), y_pos + Ship_Radius * math.sin(angle))
+        right_corner = (x_pos + Ship_Radius * math.cos(angle - 2 * math.pi / 3), y_pos + Ship_Radius *
+                       math.sin(angle - 2 * math.pi / 3))
+        left_corner = (x_pos + Ship_Radius * math.cos(2 * math.pi / 3 + angle), y_pos + Ship_Radius *
+                       math.sin(2 * math.pi / 3 + angle))
+
+        pygame.draw.circle(self.get_screen(), Ship_Colour, (x_pos, y_pos), Ship_Radius, 1)
+
+        pygame.draw.polygon(self.get_screen(), Ship_Colour, (centre, right_corner, tip, left_corner))
+
+
     def draw_ship(self):
         ship = self.get_ensemble().get_ship()
         pos_vec = ship.get_pos()
@@ -48,8 +61,7 @@ class Display:
         (line_x, line_y) = (int(line_end_vec[0][0]), int(line_end_vec[1][0]))
         for i in range(3):
             for j in range(3):
-                pygame.draw.circle(self.get_screen(), Ship_Colour, (x + (i-1) * w, y + (j-1) * h), int(Ship_Radius), 1)
-                pygame.draw.line(self.get_screen(), Ship_Colour, (x + (i-1) * w, y + (j-1) * h), (line_x + (i-1) * w, line_y + (j-1) * h))
+                self.draw_one_ship(x + (i - 1) * w, y + (j - 1) * h, self.get_ensemble().get_ship().get_angle())
 
     def draw_body(self, body):
         pos_vec = body.get_pos()
