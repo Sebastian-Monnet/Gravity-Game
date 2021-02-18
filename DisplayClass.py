@@ -106,8 +106,9 @@ class Display:
         lines.append("x: Cut Throttle")
         lines.append("L_SHIFT: Increase Throttle")
         lines.append("CTRL: Decrease Throttle")
+        lines.append("Left-Right Arrows: Turn")
 
-        for i in range(5):
+        for i in range(6):
             line = lines[i]
             text = self.get_score_font().render(line, True, (255, 255, 255))
             rect = text.get_rect()
